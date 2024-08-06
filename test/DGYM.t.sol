@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "../src/token/DGYM.sol";
-import "./MockAuthority.sol";
+import {Test} from "forge-std/Test.sol";
+import {DeGymToken} from "../src/token/DGYM.sol";
+import {MockAuthority} from "./MockAuthority.sol";
 
 contract DeGymTokenTest is Test {
     DeGymToken private token;

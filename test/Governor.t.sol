@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "../src/Governor.sol";
-import "../src/token/DGYM.sol";
-import "@openzeppelin/contracts/governance/TimelockController.sol";
+import {Test} from "forge-std/Test.sol";
+import {GovernorContract} from "../src/Governor.sol";
+import {DeGymToken} from "../src/token/DGYM.sol";
+import {TimelockController} from "@openzeppelin/contracts/governance/TimelockController.sol";
 
 contract GovernorTest is Test {
     DeGymToken private token;
