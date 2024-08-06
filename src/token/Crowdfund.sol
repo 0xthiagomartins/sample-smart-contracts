@@ -3,16 +3,13 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/finance/VestingWallet.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
-import {IAuthority} from "@openzeppelin/contracts/access/manager/IAuthority.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import {IDeGymToken} from "./DeGymToken.sol";
+import {IDGYM} from "./DGYM.sol";
 
-contract DeGymCrowdsale is AccessManaged {
+contract Crowdfund is AccessManaged {
     using SafeERC20 for IERC20;
 
-    IDeGymToken public token;
+    IDGYM public token;
     address public wallet;
     string[] public phaseNames;
 
@@ -41,7 +38,7 @@ contract DeGymCrowdsale is AccessManaged {
         address walletAddress,
         address initialAuthority
     ) AccessManaged(initialAuthority) {
-        token = IDeGymToken(tokenAddress);
+        token = IDGYM(tokenAddress);
         wallet = walletAddress;
     }
 

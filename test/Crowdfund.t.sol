@@ -2,13 +2,13 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/DeGymToken.sol";
-import "../src/DeGymCrowdsale.sol";
+import "../src/token/DGYM.sol";
+import "../src/token/Crowdfund.sol";
 import "./MockAuthority.sol";
 
-contract DeGymCrowdsaleTest is Test {
+contract CrowdfundTest is Test {
     DeGymToken private token;
-    DeGymCrowdsale private crowdsale;
+    Crowdfund private crowdsale;
     MockAuthority private authority;
     address private owner = address(0x123);
     address private user = address(0x456);
@@ -16,12 +16,8 @@ contract DeGymCrowdsaleTest is Test {
 
     function setUp() public {
         authority = new MockAuthority();
-        token = new DeGymToken(1000 ether, 2000 ether, address(authority));
-        crowdsale = new DeGymCrowdsale(
-            address(token),
-            wallet,
-            address(authority)
-        );
+        token = new DeGymToken(1000 ether, 2000 ether);
+        crowdsale = new Crowdfund(address(token), wallet, address(authority));
         authority.setManager(owner, true);
 
         // Allocate some tokens to the crowdsale contract

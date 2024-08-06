@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../src/DeGymToken.sol";
+import "../src/token/DGYM.sol";
 import "./MockAuthority.sol";
 
 contract DeGymTokenTest is Test {
@@ -13,7 +13,7 @@ contract DeGymTokenTest is Test {
 
     function setUp() public {
         authority = new MockAuthority();
-        token = new DeGymToken(1000 ether, 2000 ether, address(authority));
+        token = new DeGymToken(1000 ether, 2000 ether);
         authority.setManager(owner, true);
     }
 
