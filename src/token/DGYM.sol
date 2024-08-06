@@ -9,6 +9,7 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
+import {VestingWallet} from "@openzeppelin/contracts/finance/VestingWallet.sol";
 
 contract DeGymToken is
     ERC20,
@@ -17,22 +18,99 @@ contract DeGymToken is
     ERC20Permit,
     ERC20Votes
 {
-    uint256 private _cap;
+    /**
+     * The total supply of the token is set to 1_000_000_000. This establishes the upper limit
+     * of tokens that will ever be in circulation on Ethereum network.
+     */
+    uint256 private _totalSupply = 1_000_000_000 * (10 ** 18);
+
+    /**
+     *
+     * Allocating 20% to the "Ecosystem Development Fund" is crucial for funding ongoing
+     * development, research, and innovation within the token's ecosystem.
+     */
+    uint256 private _ecosystemDevelopment = (_totalSupply * 20) / 100;
+
+    /**
+     * Allocating 12% of the total supply to the "Team Growth Fund" supports the team's
+     * long-term commitment and incentivizes their continuous contribution to the project's
+     * success.
+     */
+    uint256 private _teamGrowth = (_totalSupply * 12) / 100;
+
+    /**
+     * Allocating 8% for the "Community Engagement Fund" fosters a strong, interactive
+     * community. This fund can be used for community rewards or other engagement
+     * initiatives.
+     */
+    uint256 private _communityEngagement = (_totalSupply * 8) / 100;
+
+    /**
+     * Allocating 8% for the "Marketing and Promotion Fund" ensures ample resources are available
+     * for advertising, partnerships, and other promotional activities to increase the token's
+     * visibility and adoption.
+     */
+    uint256 private _marketingPromotion = (_totalSupply * 8) / 100;
+
+    /**
+     * The remaining 52% of the tokens, referred to as _remainingTokens, are allocated to the
+     * Deployer for purposes such as public sale and ensuring liquidity post-listing. This large
+     * allocation allows for significant market penetration and liquidity provision.
+     */
+    uint256 private _remainingTokens =
+        _totalSupply -
+            (_teamGrowth +
+                _communityEngagement +
+                _marketingPromotion +
+                _ecosystemDevelopment);
+
+    uint256 private _cap = 10_000_000_000 * (10 ** 18);
 
     event CapUpdated(uint256 newCap);
 
-    constructor(
-        uint256 initialSupply,
-        uint256 initialCap
-    )
-        ERC20("DeGymToken", "DGYM")
+    constructor()
+        ERC20("DeGym Token", "DGYM")
         AccessManaged(msg.sender)
-        ERC20Permit("DeGymToken")
+        ERC20Permit("DeGym Token")
         ERC20Votes()
     {
-        require(initialCap > 0, "ERC20Capped: cap is 0");
-        _cap = initialCap * (10 ** decimals());
-        _mint(msg.sender, initialSupply * 10 ** decimals());
+        address ecosystemDevelopmentVesting = address(
+            new VestingWallet(
+                0xA043BC356A11f548f77F716e8d3c31b1e8beDf7a,
+                uint64(block.timestamp),
+                365 days
+            )
+        );
+
+        address teamGrowthVesting = address(
+            new VestingWallet(
+                0xa81AA52EA19ef26739B0762C03381f9a84c8b05d,
+                uint64(block.timestamp),
+                365 days
+            )
+        );
+
+        address communityEngagementVesting = address(
+            new VestingWallet(
+                0x49d125cA46997e3C90ebB0cc9940e033487F8FA4,
+                uint64(block.timestamp),
+                365 days
+            )
+        );
+
+        address marketingPromotionVesting = address(
+            new VestingWallet(
+                0x8126A70a57B44d32e6eB9F41c8DF4A2A47Ff4Be7,
+                uint64(block.timestamp),
+                365 days
+            )
+        );
+
+        _mint(ecosystemDevelopmentVesting, _ecosystemDevelopment);
+        _mint(teamGrowthVesting, _teamGrowth);
+        _mint(communityEngagementVesting, _communityEngagement);
+        _mint(marketingPromotionVesting, _marketingPromotion);
+        _mint(msg.sender, _remainingTokens);
     }
 
     function cap() public view returns (uint256) {

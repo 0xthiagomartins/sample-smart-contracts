@@ -2,28 +2,27 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
-import "../src/token/Crowdfund.sol";
-import "../src/token/DGYM.sol";
+import {Crowdfund} from "../src/token/Crowdfund.sol";
 
 contract InteractCrowdfund is Script {
     function run() external {
+        address payable crowdsaleAddress = payable(
+            vm.envAddress("CROWDSALE_ADDRESS")
+        );
+
         vm.startBroadcast();
 
-        Crowdfund crowdsale = Crowdfund(0xYourDeployedCrowdfundAddress); // Replace with the actual deployed Crowdfund address
+        Crowdfund crowdsale = Crowdfund(crowdsaleAddress);
 
-        // Interactions
-        address phaseName = "Phase1";
-        uint256 rate = 1000;
-        uint256 allocation = 100 ether;
-        uint256 startTime = block.timestamp + 1 hours;
-        uint256 endTime = block.timestamp + 1 days;
-        bool burnable = true;
+        // Activate phases
+        crowdsale.activatePhase("Pre-seed sale");
+        console.log("Pre-seed sale activated");
 
-        crowdsale.setPhase(phaseName, rate, allocation, startTime, endTime, burnable);
-        console.log("Phase set");
+        crowdsale.activatePhase("Private sale");
+        console.log("Private sale activated");
 
-        crowdsale.activatePhase(phaseName);
-        console.log("Phase activated");
+        crowdsale.activatePhase("Public sale");
+        console.log("Public sale activated");
 
         vm.stopBroadcast();
     }

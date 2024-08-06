@@ -16,12 +16,14 @@ contract Crowdfund is AccessManaged {
 
     struct Phase {
         uint256 rate;
-        uint256 allocation;
+        uint256 allocation; // in tokens
         uint256 sold;
         bool burnable;
         uint256 startTime;
         uint256 endTime;
         bool active;
+        uint64 cliffDuration;
+        uint64 vestingDuration;
     }
 
     mapping(string => Phase) public phases;
@@ -41,6 +43,39 @@ contract Crowdfund is AccessManaged {
     ) AccessManaged(initialAuthority) {
         token = IDGYM(tokenAddress);
         wallet = walletAddress;
+
+        // Initializing the three phases
+        uint256 totalSupply = token.totalSupply();
+        setPhase(
+            "Pre-seed sale",
+            0.3 ether,
+            (totalSupply * 3) / 100,
+            block.timestamp,
+            block.timestamp + 2 weeks,
+            true,
+            60 days,
+            365 days
+        );
+        setPhase(
+            "Private sale",
+            (0.3 ether * 130) / 100,
+            (totalSupply * 7) / 100,
+            block.timestamp + 2 weeks,
+            block.timestamp + 8 weeks,
+            true,
+            90 days,
+            365 days
+        );
+        setPhase(
+            "Public sale",
+            (((0.3 ether * 130) / 100) * 130) / 100,
+            (totalSupply * 30) / 100,
+            block.timestamp + 8 weeks,
+            block.timestamp + 14 weeks,
+            true,
+            0,
+            0
+        );
     }
 
     receive() external payable {
@@ -53,13 +88,11 @@ contract Crowdfund is AccessManaged {
         uint256 allocation,
         uint256 startTime,
         uint256 endTime,
-        bool burnable
-    ) external restricted {
+        bool burnable,
+        uint64 cliffDuration,
+        uint64 vestingDuration
+    ) internal {
         require(endTime > startTime, "End time must be after start time");
-        require(
-            startTime > block.timestamp,
-            "Start time must be in the future"
-        );
 
         phases[phaseName] = Phase({
             rate: rate,
@@ -68,7 +101,9 @@ contract Crowdfund is AccessManaged {
             burnable: burnable,
             startTime: startTime,
             endTime: endTime,
-            active: false
+            active: false,
+            cliffDuration: cliffDuration,
+            vestingDuration: vestingDuration
         });
         phaseNames.push(phaseName);
     }
@@ -111,7 +146,7 @@ contract Crowdfund is AccessManaged {
         require(bytes(activePhaseName).length > 0, "No active sale phase");
 
         Phase storage phase = phases[activePhaseName];
-        tokens = weiAmount * phase.rate;
+        tokens = weiAmount / phase.rate;
         require(
             phase.sold + tokens <= phase.allocation,
             "Exceeds phase allocation"
@@ -119,7 +154,18 @@ contract Crowdfund is AccessManaged {
 
         phase.sold += tokens;
 
-        IERC20(address(token)).safeTransfer(beneficiary, tokens);
+        if (phase.cliffDuration > 0 || phase.vestingDuration > 0) {
+            createVestingWallet(
+                beneficiary,
+                uint64(block.timestamp + phase.cliffDuration),
+                uint64(phase.vestingDuration)
+            );
+            address vestingWallet = vestingWallets[beneficiary];
+            IERC20(address(token)).safeTransfer(vestingWallet, tokens);
+        } else {
+            IERC20(address(token)).safeTransfer(beneficiary, tokens);
+        }
+
         emit TokensPurchased(beneficiary, weiAmount, tokens);
 
         payable(wallet).transfer(weiAmount);
@@ -139,17 +185,15 @@ contract Crowdfund is AccessManaged {
         address beneficiary,
         uint64 startTimestamp,
         uint64 durationSeconds
-    ) external restricted {
-        require(
-            vestingWallets[beneficiary] == address(0),
-            "Vesting wallet already exists for beneficiary"
-        );
-        VestingWallet vestingWallet = new VestingWallet(
-            beneficiary,
-            startTimestamp,
-            durationSeconds
-        );
-        vestingWallets[beneficiary] = address(vestingWallet);
+    ) internal {
+        if (vestingWallets[beneficiary] == address(0)) {
+            VestingWallet vestingWallet = new VestingWallet(
+                beneficiary,
+                startTimestamp,
+                durationSeconds
+            );
+            vestingWallets[beneficiary] = address(vestingWallet);
+        }
     }
 
     function transferToVestingWallet(
