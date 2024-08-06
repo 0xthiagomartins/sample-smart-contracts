@@ -53,8 +53,8 @@ contract DeGymToken is
     uint256 private _marketingPromotion = (_totalSupply * 125) / 1000;
 
     /**
-     * The remaining 52% of the tokens, referred to as _remainingTokens, are allocated to the
-     * Deployer for purposes such as public sale and ensuring liquidity post-listing. This large
+     * The remaining 50% of the tokens, referred to as _remainingTokens, are allocated to the
+     * Deployer for purposes such as sales and ensuring liquidity post-listing. This large
      * allocation allows for significant market penetration and liquidity provision.
      */
     uint256 private _remainingTokens =
@@ -77,32 +77,32 @@ contract DeGymToken is
         address ecosystemDevelopmentVesting = address(
             new VestingWallet(
                 0xA043BC356A11f548f77F716e8d3c31b1e8beDf7a,
-                uint64(block.timestamp),
-                365 days
+                uint64(block.timestamp + 30 days), // 1 month cliff
+                uint64(11 * 30 days) // Vesting over 11 months
             )
         );
 
         address teamGrowthVesting = address(
             new VestingWallet(
                 0xa81AA52EA19ef26739B0762C03381f9a84c8b05d,
-                uint64(block.timestamp),
-                365 days
+                uint64(block.timestamp + 30 days), // 1 month cliff
+                uint64(11 * 30 days) // Vesting over 11 months
             )
         );
 
         address communityEngagementVesting = address(
             new VestingWallet(
                 0x49d125cA46997e3C90ebB0cc9940e033487F8FA4,
-                uint64(block.timestamp),
-                365 days
+                uint64(block.timestamp + 14 days), // 2 weeks cliff
+                uint64(11 * 30 days) // Vesting over 11 months
             )
         );
 
         address marketingPromotionVesting = address(
             new VestingWallet(
                 0x8126A70a57B44d32e6eB9F41c8DF4A2A47Ff4Be7,
-                uint64(block.timestamp),
-                365 days
+                uint64(block.timestamp + 30 days), // 1 month cliff
+                uint64(11 * 30 days) // Vesting over 11 months
             )
         );
 
