@@ -32,25 +32,25 @@ contract DeGymToken is
     uint256 private _ecosystemDevelopment = (_totalSupply * 20) / 100;
 
     /**
-     * Allocating 12% of the total supply to the "Team Growth Fund" supports the team's
+     * Allocating 15% of the total supply to the "Team Growth Fund" supports the team's
      * long-term commitment and incentivizes their continuous contribution to the project's
      * success.
      */
-    uint256 private _teamGrowth = (_totalSupply * 12) / 100;
+    uint256 private _teamGrowth = (_totalSupply * 15) / 100;
 
     /**
-     * Allocating 8% for the "Community Engagement Fund" fosters a strong, interactive
+     * Allocating 12.5% for the "Community Engagement Fund" fosters a strong, interactive
      * community. This fund can be used for community rewards or other engagement
      * initiatives.
      */
-    uint256 private _communityEngagement = (_totalSupply * 8) / 100;
+    uint256 private _communityEngagement = (_totalSupply * 125) / 1000;
 
     /**
-     * Allocating 8% for the "Marketing and Promotion Fund" ensures ample resources are available
+     * Allocating 12.5% for the "Marketing and Promotion Fund" ensures ample resources are available
      * for advertising, partnerships, and other promotional activities to increase the token's
      * visibility and adoption.
      */
-    uint256 private _marketingPromotion = (_totalSupply * 8) / 100;
+    uint256 private _marketingPromotion = (_totalSupply * 125) / 1000;
 
     /**
      * The remaining 52% of the tokens, referred to as _remainingTokens, are allocated to the
