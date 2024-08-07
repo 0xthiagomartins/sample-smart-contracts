@@ -76,7 +76,7 @@ contract DeGymToken is
     {
         address ecosystemDevelopmentVesting = address(
             new VestingWallet(
-                0xA043BC356A11f548f77F716e8d3c31b1e8beDf7a,
+                0x609D40C1d5750ff03a3CafF30152AD03243c02cB,
                 uint64(block.timestamp + 30 days), // 1 month cliff
                 uint64(11 * 30 days) // Vesting over 11 months
             )
@@ -84,7 +84,7 @@ contract DeGymToken is
 
         address teamGrowthVesting = address(
             new VestingWallet(
-                0xa81AA52EA19ef26739B0762C03381f9a84c8b05d,
+                0xaDcB2f54F652BFD7Ac1d7D7b12213b4519F0265D,
                 uint64(block.timestamp + 30 days), // 1 month cliff
                 uint64(11 * 30 days) // Vesting over 11 months
             )
@@ -92,7 +92,7 @@ contract DeGymToken is
 
         address communityEngagementVesting = address(
             new VestingWallet(
-                0x49d125cA46997e3C90ebB0cc9940e033487F8FA4,
+                0x139780E08d3DAF2f72D10ccC635593cDB301B4bC,
                 uint64(block.timestamp + 14 days), // 2 weeks cliff
                 uint64(11 * 30 days) // Vesting over 11 months
             )
@@ -100,7 +100,7 @@ contract DeGymToken is
 
         address marketingPromotionVesting = address(
             new VestingWallet(
-                0x8126A70a57B44d32e6eB9F41c8DF4A2A47Ff4Be7,
+                0x6BC8906aD6369bD5cfe7B4f2f181f0759A3D53b6,
                 uint64(block.timestamp + 30 days), // 1 month cliff
                 uint64(11 * 30 days) // Vesting over 11 months
             )
@@ -148,14 +148,6 @@ contract DeGymToken is
         address owner
     ) public view override(ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
-    }
-
-    function _mint(address account, uint256 amount) internal override(ERC20) {
-        super._mint(account, amount);
-    }
-
-    function _burn(address account, uint256 amount) internal override(ERC20) {
-        super._burn(account, amount);
     }
 }
 

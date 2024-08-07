@@ -9,7 +9,6 @@ contract DeployDeGymToken is Script {
         vm.startBroadcast();
 
         DeGymToken token = new DeGymToken();
-
         console.log("DeGymToken deployed at:", address(token));
 
         vm.stopBroadcast();
