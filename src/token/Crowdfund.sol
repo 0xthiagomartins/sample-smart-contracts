@@ -43,46 +43,13 @@ contract Crowdfund is AccessManaged {
     ) AccessManaged(initialAuthority) {
         token = IDGYM(tokenAddress);
         wallet = walletAddress;
-
-        // Initializing the three phases
-        uint256 totalSupply = token.totalSupply();
-        setPhase(
-            "Pre-seed sale",
-            0.3 ether,
-            (totalSupply * 3) / 100,
-            block.timestamp,
-            block.timestamp + 2 weeks,
-            true,
-            60 days,
-            365 days
-        );
-        setPhase(
-            "Private sale",
-            (0.3 ether * 130) / 100,
-            (totalSupply * 7) / 100,
-            block.timestamp + 2 weeks,
-            block.timestamp + 8 weeks,
-            true,
-            90 days,
-            365 days
-        );
-        setPhase(
-            "Public sale",
-            (((0.3 ether * 130) / 100) * 130) / 100,
-            (totalSupply * 30) / 100,
-            block.timestamp + 8 weeks,
-            block.timestamp + 14 weeks,
-            true,
-            0,
-            0
-        );
     }
 
     receive() external payable {
         buyTokens(msg.sender);
     }
 
-    function setPhase(
+    function initializePhase(
         string memory phaseName,
         uint256 rate,
         uint256 allocation,
@@ -91,7 +58,7 @@ contract Crowdfund is AccessManaged {
         bool burnable,
         uint64 cliffDuration,
         uint64 vestingDuration
-    ) internal {
+    ) public restricted {
         require(endTime > startTime, "End time must be after start time");
 
         phases[phaseName] = Phase({
