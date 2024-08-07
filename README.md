@@ -64,3 +64,11 @@ $ forge --help
 $ anvil --help
 $ cast --help
 ```
+
+### Set environment variables based on NETWORK value
+```sh
+chmod +x set-env.sh
+```
+```sh
+source ./set-env.sh
+```
