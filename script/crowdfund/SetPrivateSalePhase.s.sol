@@ -22,7 +22,7 @@ contract SetPrivateSalePhase is Script {
             (0.3 ether * 130) / 100,
             (totalSupply * 7) / 100,
             block.timestamp + 2 weeks,
-            block.timestamp + 8 weeks,
+            6 weeks,
             true,
             90 days,
             365 days

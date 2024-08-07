@@ -23,14 +23,14 @@ contract DeployCrowdfund is Script {
         uint256 totalSupply = token.totalSupply();
 
         crowdfund.initializePhase(
-            "Pre-seed sale",
-            0.3 ether,
-            (totalSupply * 3) / 100,
-            block.timestamp,
-            block.timestamp + 2 weeks,
-            true,
-            60 days,
-            365 days
+            "Pre-seed sale", // phaseName
+            0.3 ether, // rate (each DGYM costs 0.3 ether)
+            (totalSupply * 3) / 100, // allocation
+            1725192000, // startDate - September 1, 2024 12:00:00 PM in timestamp
+            30 days, // duration
+            true, // burnable
+            60 days, // cliffDuration
+            365 days // vestingDuration
         );
 
         // Transfer the amount for pre-seed

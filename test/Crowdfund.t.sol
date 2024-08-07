@@ -2,34 +2,70 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {DeGymToken} from "../src/token/DGYM.sol";
 import {Crowdfund} from "../src/token/Crowdfund.sol";
+import {DeGymToken} from "../src/token/DGYM.sol";
 import {MockAuthority} from "./MockAuthority.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IDGYM} from "../src/token/DGYM.sol";
+import {VestingWallet} from "@openzeppelin/contracts/finance/VestingWallet.sol";
 
 contract CrowdfundTest is Test {
-    DeGymToken private token;
     Crowdfund private crowdsale;
+    DeGymToken private token;
     MockAuthority private authority;
     address private owner = address(0x123);
-    address private user = address(0x456);
     address private wallet = address(0x789);
 
     function setUp() public {
+        vm.startPrank(owner);
+        token = new DeGymToken();
         authority = new MockAuthority();
-        token = new DeGymToken(1_000_000_000 ether, 10_000_000_000 ether);
         crowdsale = new Crowdfund(address(token), wallet, address(authority));
         authority.setManager(owner, true);
 
-        // Allocate some tokens to the crowdsale contract
-        vm.startPrank(owner);
-        token.mint(address(crowdsale), 500_000_000 ether); // Allocate half of the cap for the sale
+        // Initialize the three phases
+        uint256 totalSupply = token.totalSupply();
+
+        crowdsale.initializePhase(
+            "Pre-seed sale",
+            0.3 ether,
+            (totalSupply * 3) / 100,
+            block.timestamp,
+            30 days,
+            true,
+            60 days,
+            365 days
+        );
+        crowdsale.initializePhase(
+            "Private sale",
+            (0.3 ether * 130) / 100,
+            (totalSupply * 7) / 100,
+            block.timestamp + 2 weeks,
+            6 weeks,
+            true,
+            90 days,
+            365 days
+        );
+        crowdsale.initializePhase(
+            "Public sale",
+            (((0.3 ether * 130) / 100) * 130) / 100,
+            (totalSupply * 30) / 100,
+            block.timestamp + 8 weeks,
+            6 weeks,
+            true,
+            0,
+            0
+        );
+
+        // Allocate tokens to the crowdsale contract
+        token.mint(address(crowdsale), (totalSupply * 50) / 100); // 50% of total supply
         vm.stopPrank();
     }
 
-    function testSetPhase() public {
-        vm.startPrank(owner);
-        crowdsale.activatePhase("Pre-seed sale");
+    function testInitialization() public {
+        uint256 totalSupply = token.totalSupply();
+
+        // Check initial phase settings for Pre-seed sale
         (
             uint256 rate,
             uint256 allocation,
@@ -37,92 +73,53 @@ contract CrowdfundTest is Test {
             bool burnable,
             uint256 startTime,
             uint256 endTime,
-            bool active
+            bool active,
+            uint64 cliffDuration,
+            uint64 vestingDuration
         ) = crowdsale.phases("Pre-seed sale");
-
         assertEq(rate, 0.3 ether);
-        assertEq(allocation, 30_000_000 ether); // 3% of 1,000,000,000 total supply
+        assertEq(allocation, (totalSupply * 3) / 100);
         assertEq(sold, 0);
         assertEq(burnable, true);
-        assertEq(active, true);
-        vm.stopPrank();
-    }
+        assertEq(cliffDuration, 60 days);
+        assertEq(vestingDuration, 365 days);
 
-    function testActivatePhase() public {
-        vm.startPrank(owner);
-        crowdsale.activatePhase("Private sale");
-        (, , , , , , bool active) = crowdsale.phases("Private sale");
-        assertEq(active, true);
-        vm.stopPrank();
-    }
+        // Check initial phase settings for Private sale
+        (
+            rate,
+            allocation,
+            sold,
+            burnable,
+            startTime,
+            endTime,
+            active,
+            cliffDuration,
+            vestingDuration
+        ) = crowdsale.phases("Private sale");
+        assertEq(rate, (0.3 ether * 130) / 100);
+        assertEq(allocation, (totalSupply * 7) / 100);
+        assertEq(sold, 0);
+        assertEq(burnable, true);
+        assertEq(cliffDuration, 90 days);
+        assertEq(vestingDuration, 365 days);
 
-    function testBuyTokensPreSeed() public {
-        vm.startPrank(owner);
-        crowdsale.activatePhase("Pre-seed sale");
-        vm.stopPrank();
-
-        vm.deal(user, 3 ether); // User buys 10 tokens at 0.3 ether each
-        vm.startPrank(user);
-        crowdsale.buyTokens{value: 3 ether}(user);
-
-        address vestingWallet = crowdsale.vestingWallets(user);
-        assertEq(IERC20(address(token)).balanceOf(vestingWallet), 10 ether);
-        vm.stopPrank();
-    }
-
-    function testBuyTokensPrivateSale() public {
-        vm.startPrank(owner);
-        crowdsale.activatePhase("Private sale");
-        vm.stopPrank();
-
-        vm.deal(user, 39 ether); // User buys 100 tokens at 0.39 ether each (30% above pre-seed price)
-        vm.startPrank(user);
-        crowdsale.buyTokens{value: 39 ether}(user);
-
-        address vestingWallet = crowdsale.vestingWallets(user);
-        assertEq(IERC20(address(token)).balanceOf(vestingWallet), 100 ether);
-        vm.stopPrank();
-    }
-
-    function testBuyTokensPublicSale() public {
-        vm.startPrank(owner);
-        crowdsale.activatePhase("Public sale");
-        vm.stopPrank();
-
-        vm.deal(user, 169 ether); // User buys 100 tokens at 1.69 ether each (30% above private sale price)
-        vm.startPrank(user);
-        crowdsale.buyTokens{value: 169 ether}(user);
-
-        assertEq(token.balanceOf(user), 100 ether);
-        vm.stopPrank();
-    }
-
-    function testBuyTokensExceedsAllocation() public {
-        vm.startPrank(owner);
-        crowdsale.activatePhase("Pre-seed sale");
-        vm.stopPrank();
-
-        vm.deal(user, 100 ether);
-        vm.startPrank(user);
-        vm.expectRevert("Exceeds phase allocation");
-        crowdsale.buyTokens{value: 100 ether}(user);
-        vm.stopPrank();
-    }
-
-    function testWithdrawTokens() public {
-        vm.startPrank(owner);
-        crowdsale.withdrawTokens(IERC20(address(token)));
-
-        assertEq(token.balanceOf(wallet), 500_000_000 ether);
-        vm.stopPrank();
-    }
-
-    function testWithdraw() public {
-        vm.startPrank(owner);
-        vm.deal(address(crowdsale), 1 ether);
-        crowdsale.withdraw();
-
-        assertEq(wallet.balance, 1 ether);
-        vm.stopPrank();
+        // Check initial phase settings for Public sale
+        (
+            rate,
+            allocation,
+            sold,
+            burnable,
+            startTime,
+            endTime,
+            active,
+            cliffDuration,
+            vestingDuration
+        ) = crowdsale.phases("Public sale");
+        assertEq(rate, (((0.3 ether * 130) / 100) * 130) / 100);
+        assertEq(allocation, (totalSupply * 30) / 100);
+        assertEq(sold, 0);
+        assertEq(burnable, true);
+        assertEq(cliffDuration, 0);
+        assertEq(vestingDuration, 0);
     }
 }

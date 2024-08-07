@@ -22,7 +22,7 @@ contract SetPublicSalePhase is Script {
             (((0.3 ether * 130) / 100) * 130) / 100,
             (totalSupply * 30) / 100,
             block.timestamp + 8 weeks,
-            block.timestamp + 14 weeks,
+            6 weeks,
             true,
             0,
             0

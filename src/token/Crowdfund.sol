@@ -54,11 +54,12 @@ contract Crowdfund is AccessManaged {
         uint256 rate,
         uint256 allocation,
         uint256 startTime,
-        uint256 endTime,
+        uint256 duration,
         bool burnable,
         uint64 cliffDuration,
         uint64 vestingDuration
     ) public restricted {
+        uint256 endTime = startTime + duration;
         require(endTime > startTime, "End time must be after start time");
 
         phases[phaseName] = Phase({
@@ -75,34 +76,48 @@ contract Crowdfund is AccessManaged {
         phaseNames.push(phaseName);
     }
 
-    function activatePhase(string memory phaseName) external restricted {
-        Phase storage phase = phases[phaseName];
-        require(
-            phase.startTime <= block.timestamp,
-            "Phase has not started yet"
-        );
-        require(phase.endTime > block.timestamp, "Phase has ended");
-        require(!phase.active, "Phase is already active");
-
-        phase.active = true;
+    function activatePhaseAutomatically() public {
+        for (uint i = 0; i < phaseNames.length; i++) {
+            Phase storage phase = phases[phaseNames[i]];
+            if (
+                !phase.active &&
+                phase.startTime <= block.timestamp &&
+                phase.endTime > block.timestamp
+            ) {
+                phase.active = true;
+            }
+        }
     }
 
-    function deactivatePhase(string memory phaseName) external restricted {
-        Phase storage phase = phases[phaseName];
-        require(phase.active, "Phase is not active");
-
-        phase.active = false;
-
-        if (phase.burnable) {
-            uint256 unsoldTokens = phase.allocation - phase.sold;
-            if (unsoldTokens > 0) {
-                token.burn(unsoldTokens);
-                emit PhaseEnded(phaseName, unsoldTokens);
+    function deactivatePhaseAutomatically() public {
+        for (uint i = 0; i < phaseNames.length; i++) {
+            Phase storage phase = phases[phaseNames[i]];
+            if (
+                phase.active &&
+                (phase.endTime <= block.timestamp ||
+                    phase.sold >= phase.allocation)
+            ) {
+                phase.active = false;
+                if (phase.burnable) {
+                    uint256 unsoldTokens = phase.allocation - phase.sold;
+                    if (unsoldTokens > 0) {
+                        token.burn(unsoldTokens);
+                        emit PhaseEnded(phaseNames[i], unsoldTokens);
+                    }
+                }
+                createVestingWallet(
+                    msg.sender,
+                    uint64(block.timestamp + phase.cliffDuration),
+                    uint64(phase.vestingDuration)
+                );
             }
         }
     }
 
     function buyTokens(address beneficiary) public payable {
+        activatePhaseAutomatically();
+        deactivatePhaseAutomatically();
+
         uint256 weiAmount = msg.value;
         uint256 tokens;
 
@@ -180,9 +195,5 @@ contract Crowdfund is AccessManaged {
     function withdrawTokens(IERC20 tokenAddress) external restricted {
         uint256 balance = tokenAddress.balanceOf(address(this));
         tokenAddress.safeTransfer(wallet, balance);
-    }
-
-    function withdraw() external restricted {
-        payable(wallet).transfer(address(this).balance);
     }
 }
