@@ -16,7 +16,7 @@ contract DeGymToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ERC20Votes {
      * The total supply of the token is set to 1_000_000_000. This establishes the upper limit
      * of tokens that will ever be in circulation on Ethereum network.
      */
-    uint256 private _totalSupply = 1_000_000_000 * (10 ** 18);
+    uint256 private _totalSupply = 1_000_000_000e18;
 
     /**
      *
@@ -47,7 +47,7 @@ contract DeGymToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ERC20Votes {
     uint256 private _marketingPromotion = (_totalSupply * 125) / 1000;
 
     /**
-     * The remaining 50% of the tokens, referred to as _remainingTokens, are allocated to the
+     * The remaining 40% of the tokens, referred to as _remainingTokens, are allocated to the
      * Deployer for purposes such as sales and ensuring liquidity post-listing. This large
      * allocation allows for significant market penetration and liquidity provision.
      */
@@ -58,7 +58,7 @@ contract DeGymToken is ERC20, ERC20Burnable, Ownable, ERC20Permit, ERC20Votes {
                 _marketingPromotion +
                 _ecosystemDevelopment);
 
-    uint256 private _cap = 10_000_000_000 * (10 ** 18);
+    uint256 private _cap = 10_000_000_000e18;
 
     event CapUpdated(uint256 newCap);
 
