@@ -13,7 +13,7 @@ contract GovernorTest is Test {
     address private owner = address(0x123);
 
     function setUp() public {
-        token = new DeGymToken(1000 ether, 2000 ether);
+        token = new DeGymToken();
         address[] memory proposers = new address[](1);
         proposers[0] = owner;
         address[] memory executors = new address[](1);
